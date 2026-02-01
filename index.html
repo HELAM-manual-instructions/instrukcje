@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instrukcje PDF i Opinie</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 15px; background: #f4f7f6; color: #333; }
+        .container { background: white; padding: 20px; border-radius: 20px; max-width: 400px; margin: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .btn-pdf { display: block; background: #ff9800; color: white; padding: 18px; text-decoration: none; border-radius: 10px; font-weight: bold; margin-bottom: 25px; font-size: 1.1em; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .btn-pdf:hover { background: #e68a00; }
+        select, textarea { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; }
+        button[type="submit"] { background: #27ae60; color: white; border: none; padding: 15px; border-radius: 10px; width: 100%; cursor: pointer; font-weight: bold; font-size: 1.1em; }
+        button[type="submit"]:hover { background: #219150; }
+        .lang-bar { margin-bottom: 20px; display: flex; justify-content: center; gap: 5px; flex-wrap: wrap; }
+        .lang-bar button { padding: 8px 12px; cursor: pointer; border: 1px solid #ccc; background: #fff; border-radius: 5px; font-size: 0.9em; }
+        .model-name { color: #7f8c8d; font-weight: bold; margin-bottom: 20px; font-size: 0.9em; }
+        hr { border: 0; border-top: 1px solid #eee; margin: 25px 0; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="lang-bar">
+        <button onclick="setLang('PL')">PL</button>
+        <button onclick="setLang('EN')">EN</button>
+        <button onclick="setLang('DE')">DE</button>
+        <button onclick="setLang('UA')">UA</button>
+        <button onclick="setLang('FR')">FR</button>
+        <button onclick="setLang('IT')">IT</button>
+    </div>
+
+    <h2 id="title">Jakość wykonania</h2>
+    <div class="model-name">Model: <span id="display-model">Ładowanie...</span></div>
+
+    <a href="#" id="pdf-link" target="_blank" class="btn-pdf">POBIERZ INSTRUKCJĘ PDF</a>
+
+    <hr>
+
+    <form action="https://formspree.io/f/mdadzapd" method="POST">
+        <input type="hidden" name="Model_Produktu" id="hidden-model">
+        
+        <p><b id="q-stars">Jak oceniasz jakość produktu?</b></p>
+        <select name="Ocena_Gwiazdki" required>
+            <option value="5">⭐⭐⭐⭐⭐</option>
+            <option value="4">⭐⭐⭐⭐</option>
+            <option value="3">⭐⭐⭐</option>
+            <option value="2">⭐⭐</option>
+            <option value="1">⭐</option>
+        </select>
+
+        <p><b id="q-comm">Twoje uwagi (opcjonalnie):</b></p>
+        <textarea name="Komentarz_Klienta" rows="3" placeholder="..."></textarea>
+
+        <button type="submit" id="btn-send">Wyślij opinię</button>
+    </form>
+</div>
+
+<script>
+    // --- 1. TWOJA BAZA LINKÓW DO PDF (Możesz tu dopisywać kolejne) ---
+    const bazaInstrukcji = {
+        "W-2016/3": "https://drive.google.com/file/d/16DbMprVWQecPDApwMCfGqb3osU91Dc1E/view",
+        "W-KM 3300 BK+KL": "https://drive.google.com/drive/folders/1FYV_YxJZ0TmVxQn5NQQVWoJpgyStjVfe"
+    };
+
+    // --- 2. TŁUMACZENIA ---
+    const translations = {
+        "PL": { title: "Jakość wykonania", download: "POBIERZ INSTRUKCJĘ PDF", stars: "Jak oceniasz jakość?", comm: "Twoje uwagi:", send: "Wyślij opinię" },
+        "EN": { title: "Build Quality", download: "DOWNLOAD PDF MANUAL", stars: "Rate quality:", comm: "Your comments:", send: "Submit Review" },
+        "DE": { title: "Qualität", download: "PDF HERUNTERLADEN", stars: "Bewertung:", comm: "Anmerkungen:", send: "Senden" },
+        "UA": { title: "Якість виконання", download: "ЗАВАНТАЖИТИ PDF", stars: "Оцініть якість:", comm: "Зауваження:", send: "Надіслати" },
+        "FR": { title: "Qualité", download: "TÉLÉCHARGER LE PDF", stars: "Évaluer la qualité:", comm: "Commentaires:", send: "Envoyer" },
+        "IT": { title: "Qualità", download: "SCARICA IL PDF", stars: "Vota la qualità:", comm: "Commenti:", send: "Invia" }
+    };
+
+    // --- 3. LOGIKA ODCZYTU MODELU Z LINKU ---
+    // Pobiera parametr 'm' z adresu URL, np. ?m=W-2016/3
+    const urlParams = new URLSearchParams(window.location.search);
+    const modelZLinku = urlParams.get('m');
+    
+    // Obsługa polskich znaków i spacji w nazwie modelu
+    const nazwaModelu = modelZLinku ? decodeURIComponent(modelZLinku) : "Nieokreślony";
+    
+    // Wyświetlenie nazwy na stronie i przypisanie do formularza
+    document.getElementById('display-model').innerText = nazwaModelu;
+    document.getElementById('hidden-model').value = nazwaModelu;
+
+    // Ustawienie linku do PDF
+    const linkPdf = bazaInstrukcji[nazwaModelu];
+    if (linkPdf) {
+        document.getElementById('pdf-link').href = linkPdf;
+    } else {
+        document.getElementById('pdf-link').innerText = "BRAK INSTRUKCJI";
+        document.getElementById('pdf-link').style.background = "#ccc";
+        document.getElementById('pdf-link').style.pointerEvents = "none";
+    }
+
+    // Funkcja zmiany języka
+    function setLang(lang) {
+        const t = translations[lang] || translations["PL"];
+        document.getElementById('title').innerText = t.title;
+        document.getElementById('pdf-link').innerText = t.download;
+        document.getElementById('q-stars').innerText = t.stars;
+        document.getElementById('q-comm').innerText = t.comm;
+        document.getElementById('btn-send').innerText = t.send;
+    }
+</script>
+
+</body>
+</html>
